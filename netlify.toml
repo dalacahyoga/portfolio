@@ -1,0 +1,13 @@
+# Netlify build & deploy configuration
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback — let React Router handle client-side routes (e.g. /portfolio, /contact)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
