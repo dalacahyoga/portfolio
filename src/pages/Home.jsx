@@ -5,6 +5,7 @@ import {
   LinkedInIcon, GitHubIcon, LocationIcon, ArrowIcon, ChevronIcon, ExternalIcon,
 } from '../components/Icons.jsx'
 import Layout from '../components/Layout.jsx'
+import AnimatedAvatar from '../components/AnimatedAvatar.jsx'
 
 // Group consecutive entries by a key (company / school) so the name shows once,
 // with its roles or degrees nested underneath.
@@ -22,7 +23,6 @@ export default function Home() {
   const [tab, setTab] = useState('experience')
   const [openRoles, setOpenRoles] = useState(() => new Set())
   const [skillsOpen, setSkillsOpen] = useState(false)
-  const [photoOpen, setPhotoOpen] = useState(false)
   // collapse skills behind "View more": up to "UAT" on desktop, "Java" on mobile
   const javaIdx = skills.indexOf('Java')
   const uatIdx = skills.indexOf('UAT')
@@ -69,18 +69,9 @@ export default function Home() {
       <div className="bento">
         {/* About / profile — the big hero card */}
         <section className="card bento__about">
-          <div
-            className="bento__about-media"
-            onClick={() => setPhotoOpen(true)}
-            title="Click to enlarge"
-          >
-            <img
-              src={profile.photo}
-              alt={profile.name}
-              onError={(e) => { e.currentTarget.src = '/profile.svg' }}
-            />
+          <div className="bento__about-media bento__about-media--avatar">
+            <AnimatedAvatar />
             <span className="status-pill"><span className="status-pill__dot" /> Open to work</span>
-            <span className="photo-zoom" aria-hidden="true">⤢</span>
           </div>
           <div className="bento__about-headline">
             <p className="eyebrow">{profile.name}</p>
@@ -331,13 +322,6 @@ export default function Home() {
           <span className="bento__cta-arrow"><ArrowIcon /></span>
         </Link>
       </div>
-
-      {photoOpen && (
-        <div className="photo-lightbox" onClick={() => setPhotoOpen(false)}>
-          <img src={profile.photo} alt={profile.name} />
-          <button className="photo-lightbox__close" aria-label="Close">×</button>
-        </div>
-      )}
     </Layout>
   )
 }

@@ -389,6 +389,44 @@ a { color: inherit; text-decoration: none; }
   transition: border-color 0.2s;
 }
 .bento__about-media:hover img { border-color: var(--primary); }
+
+/* animated SVG avatar — replaces the static photo */
+.bento__about-media--avatar { cursor: default; }
+.avatar3d {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+  transition: border-color 0.2s;
+  display: block;
+}
+.bento__about-media--avatar:hover .avatar3d { border-color: var(--primary); }
+.avatar3d__bob { animation: avatarBob 4s ease-in-out infinite; transform-origin: center; }
+.avatar3d__head { animation: avatarTilt 6s ease-in-out infinite; transform-origin: 100px 110px; }
+.avatar3d__eyes { animation: avatarBlink 5s infinite; transform-origin: 100px 88px; }
+.avatar3d__wave { animation: avatarWave 3s ease-in-out infinite; transform-origin: 165px 165px; }
+
+@keyframes avatarBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+@keyframes avatarTilt {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(2.5deg); }
+}
+@keyframes avatarBlink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+@keyframes avatarWave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  70% { transform: rotate(-16deg); }
+  80% { transform: rotate(8deg); }
+  90% { transform: rotate(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avatar3d__bob, .avatar3d__head, .avatar3d__eyes, .avatar3d__wave { animation: none; }
+}
 .bento__about-headline { grid-area: headline; align-self: center; }
 .status-pill {
   position: absolute;
@@ -1095,6 +1133,7 @@ a { color: inherit; text-decoration: none; }
     width: 88px; aspect-ratio: 1; margin: 0; cursor: pointer;
   }
   .bento__about-media img { width: 100%; height: 100%; min-height: 0; border-radius: 50%; border: 2px solid var(--line); object-position: center 20%; }
+  .bento__about-media .avatar3d { border-width: 2px; }
   /* compact "Open to work" pill under the avatar */
   .bento__about-media .status-pill {
     display: inline-flex; gap: 5px;
