@@ -1275,11 +1275,18 @@ a { color: inherit; text-decoration: none; }
 
 /* per-visitor (vid) cards */
 .visitor-list { display: flex; flex-direction: column; gap: 10px; }
-.visitor-card { border: 1px solid var(--line); border-radius: 12px; background: var(--light); overflow: hidden; }
+.visitor-card { position: relative; border: 1px solid var(--line); border-radius: 12px; background: var(--light); overflow: hidden; }
+.visitor-card__del {
+  position: absolute; top: 9px; right: 9px; z-index: 2;
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--card-solid);
+  color: var(--muted); cursor: pointer; transition: color .2s, border-color .2s, background .2s;
+}
+.visitor-card__del:hover { color: var(--red); border-color: var(--red); background: rgba(248, 113, 113, 0.12); }
 .visitor-card__head {
   list-style: none; cursor: pointer;
   display: grid; grid-template-columns: 150px minmax(90px, 150px) 1fr auto auto auto; gap: 14px; align-items: center;
-  padding: 12px 15px; font-size: 13.5px;
+  padding: 12px 48px 12px 15px; font-size: 13.5px;
 }
 .visitor-card__head::-webkit-details-marker { display: none; }
 .visitor-card__id { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-weight: 700; color: var(--primary); }

@@ -2,7 +2,7 @@
 //  • Supabase (when configured) → data is shared across ALL visitors
 //  • localStorage fallback (no backend) → data is per-browser only
 import { supabase, supabaseEnabled } from './supabase.js'
-import { collectVisitor, getVisitorId } from './visitor.js'
+import { collectVisitor, getVisitorId, normalizeSource } from './visitor.js'
 
 const PV_KEY = 'qa_pageviews'
 const EV_KEY = 'qa_events'
@@ -68,6 +68,25 @@ async function fetchRows(table, key) {
 }
 export const getPageViews = () => fetchRows('pageviews', PV_KEY)
 export const getEvents = () => fetchRows('events', EV_KEY)
+
+// Delete everything for one visitor id: their page views AND their events.
+export async function deleteVisitor(vid) {
+  if (supabaseEnabled) {
+    const r1 = await supabase.from('pageviews').delete().eq('meta->>vid', vid)
+    if (r1.error) throw r1.error
+    const r2 = await supabase.from('events').delete().eq('meta->>vid', vid)
+    if (r2.error) throw r2.error
+    return
+  }
+  try {
+    const pv = (JSON.parse(localStorage.getItem(PV_KEY)) || []).filter((r) => r.meta?.vid !== vid)
+    localStorage.setItem(PV_KEY, JSON.stringify(pv))
+    const ev = (JSON.parse(localStorage.getItem(EV_KEY)) || []).filter((r) => r.meta?.vid !== vid)
+    localStorage.setItem(EV_KEY, JSON.stringify(ev))
+    const al = JSON.parse(localStorage.getItem(ALIAS_KEY)) || {}
+    delete al[vid]; localStorage.setItem(ALIAS_KEY, JSON.stringify(al))
+  } catch { /* ignore */ }
+}
 
 export async function clearAnalytics() {
   if (supabaseEnabled) {
@@ -137,7 +156,8 @@ export async function visitorReport() {
   }
   for (const r of rows) {
     const ts = r.ts
-    bump(source, r.meta?.source, ts)
+    const src = normalizeSource(r.meta?.source)
+    bump(source, src, ts)
     bump(device, r.meta?.device, ts)
     const v = ensure(r.meta?.vid || '—', ts)
     v.count += 1
@@ -145,7 +165,7 @@ export async function visitorReport() {
     if (ts >= v.last) { // keep the freshest profile for this visitor
       v.last = ts
       v.device = r.meta?.device || '—'; v.os = r.meta?.os || '—'; v.browser = r.meta?.browser || '—'
-      v.source = r.meta?.source || '—'; v.lang = r.meta?.lang || ''; v.screen = r.meta?.screen || ''
+      v.source = src; v.lang = r.meta?.lang || ''; v.screen = r.meta?.screen || ''
     }
     v.activity.push({ type: 'page', label: pageLabel(r.path), ts })
   }

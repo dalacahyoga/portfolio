@@ -98,6 +98,10 @@ username `dcgnrg` / password `dcgnrg`:
 No extra CORS config is needed — Supabase allows requests from any origin to the
 REST/Auth endpoints by default; RLS is what protects the data.
 
+## 6. Email notifications (optional)
+To get an email on each new visitor and a weekly summary, see
+[`EMAIL_NOTIFICATIONS.md`](EMAIL_NOTIFICATIONS.md).
+
 ---
 
 Without these env vars the app stays in **localStorage mode** (login `dcgnrg` /

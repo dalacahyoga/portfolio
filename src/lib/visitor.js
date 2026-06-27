@@ -37,6 +37,26 @@ function prettyHost(host) {
   return host
 }
 
+// Canonicalise source labels so utm aliases (ig, insta, instagram) and in-app
+// names ("Instagram") all collapse to one value. Idempotent.
+const SOURCE_ALIASES = {
+  ig: 'Instagram', insta: 'Instagram', instagram: 'Instagram',
+  fb: 'Facebook', facebook: 'Facebook', meta: 'Facebook',
+  tt: 'TikTok', tiktok: 'TikTok',
+  x: 'X/Twitter', twitter: 'X/Twitter',
+  li: 'LinkedIn', linkedin: 'LinkedIn',
+  yt: 'YouTube', youtube: 'YouTube',
+  wa: 'WhatsApp', whatsapp: 'WhatsApp',
+  tg: 'Telegram', telegram: 'Telegram',
+  google: 'Google', bing: 'Bing', github: 'GitHub',
+  direct: 'Direct',
+}
+export function normalizeSource(s) {
+  if (!s) return 'Direct'
+  const key = String(s).trim().toLowerCase()
+  return SOURCE_ALIASES[key] || String(s).trim()
+}
+
 export function collectVisitor() {
   const ua = navigator.userAgent || ''
   const uaData = navigator.userAgentData
@@ -93,6 +113,7 @@ export function collectVisitor() {
   else if (inApp) source = inApp
   else if (refHost && !sameHost) source = prettyHost(refHost)
   else source = 'Direct'
+  source = normalizeSource(source)
 
   return {
     vid: getVisitorId(),

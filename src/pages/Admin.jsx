@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { profile, profileDefaults, EDITABLE_FIELDS } from '../data/profile.js'
 import {
-  eventReport, eventLabel, visitorReport, setAlias, clearAnalytics, sourceLabel,
+  eventReport, eventLabel, visitorReport, setAlias, deleteVisitor, clearAnalytics, sourceLabel,
 } from '../lib/analytics.js'
+import { TrashIcon } from '../components/Icons.jsx'
 import { saveContent, resetContent } from '../lib/content.js'
 import { supabase, supabaseEnabled, usernameToEmail } from '../lib/supabase.js'
 
@@ -247,6 +248,12 @@ function AliasInput({ vid, value }) {
 function Visitors() {
   const { loading, error, data: rep, reload } = useReport(visitorReport)
 
+  async function removeVisitor(vid) {
+    if (!window.confirm('Hapus device ini beserta SEMUA kunjungan & event-nya?')) return
+    try { await deleteVisitor(vid) } catch { /* ignore */ }
+    reload()
+  }
+
   return (
     <section className="admin-panel">
       <div className="admin-panel__head">
@@ -263,8 +270,16 @@ function Visitors() {
           {rep.visitors.length === 0 ? <p className="admin-empty">Belum ada pengunjung.</p> : (
             <div className="visitor-list">
               {rep.visitors.map((v, idx) => (
-                <details className="visitor-card" key={v.vid} open={idx === 0}>
+                <details className="visitor-card" key={v.vid}>
                   <summary className="visitor-card__head">
+                    <button
+                      className="visitor-card__del"
+                      title="Hapus device & semua data-nya"
+                      aria-label="Hapus device"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeVisitor(v.vid) }}
+                    >
+                      <TrashIcon />
+                    </button>
                     <span className="visitor-card__id" title={v.vid}>#{idx + 1} · {String(v.vid).slice(0, 8)}</span>
                     <AliasInput vid={v.vid} value={v.alias} />
                     <span className="visitor-card__profile">{v.device} · {v.os} · {v.browser}</span>
@@ -325,8 +340,8 @@ function EventsTab() {
         <>
           {rep.groups.length === 0 ? <p className="admin-empty">Belum ada event tercatat.</p> : (
             <div className="ev-list">
-              {rep.groups.map((g, idx) => (
-                <details className="ev-card" key={g.name} open={idx === 0}>
+              {rep.groups.map((g) => (
+                <details className="ev-card" key={g.name}>
                   <summary className="ev-card__head">
                     <span className="ev-card__name">{g.label}</span>
                     <span className="ev-card__raw admin-mono">{g.name}</span>
