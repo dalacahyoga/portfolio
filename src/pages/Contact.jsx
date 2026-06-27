@@ -26,7 +26,7 @@ export default function Contact() {
     <Layout>
       <div className="page-head">
         <p className="eyebrow">Get in touch</p>
-        <h1 className="display">Let&apos;s <span className="grad-text">talk</span></h1>
+        <h1 className="display grad-text">Let&apos;s talk</h1>
         <p className="muted">Have a role, a project, or a flaky test suite that needs taming? Drop a message.</p>
       </div>
 

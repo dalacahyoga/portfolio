@@ -7,7 +7,7 @@ export default function Certificates() {
     <Layout>
       <div className="page-head">
         <p className="eyebrow">Qualifications</p>
-        <h1 className="display">My <span className="grad-text">Certificates</span></h1>
+        <h1 className="display grad-text">My Certificates</h1>
         <p className="muted">
           {certificates.length} certifications &amp; achievements — click any card to view the credential.
         </p>

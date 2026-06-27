@@ -4,9 +4,9 @@ export const profile = {
   firstName: 'Dala',
   role: 'QA Engineer',
   tagline: 'Manual & Automation Testing · Web · Mobile · API',
-  location: 'Jakarta, Indonesia',
+  location: 'Jakarta & Bali, Indonesia',
   // Local asset (bundled) so it always loads even without external network access.
-  photo: '/dala-cahyoga.jpg',
+  photo: '/dala-profile-new.PNG',
   email: 'dalacahyoga99@gmail.com',
   phone: '+62 878 6013 6274',
   about:
