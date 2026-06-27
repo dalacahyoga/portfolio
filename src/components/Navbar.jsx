@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle.jsx'
+import { trackEvent } from '../lib/analytics.js'
 
 const links = [
   { to: '/', label: 'Home', end: true },
@@ -30,6 +31,7 @@ export default function Navbar() {
                 key={l.to}
                 to={l.to}
                 end={l.end}
+                onClick={() => trackEvent('menu_click', { menu: l.label })}
                 className={({ isActive }) => `navbar__link ${isActive ? 'is-active' : ''}`}
               >
                 {l.label}

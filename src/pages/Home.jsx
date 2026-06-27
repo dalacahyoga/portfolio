@@ -5,6 +5,7 @@ import {
   LinkedInIcon, GitHubIcon, LocationIcon, ArrowIcon, ChevronIcon, ExternalIcon,
 } from '../components/Icons.jsx'
 import Layout from '../components/Layout.jsx'
+import { trackEvent } from '../lib/analytics.js'
 
 // Group consecutive entries by a key (company / school) so the name shows once,
 // with its roles or degrees nested underneath.
@@ -88,10 +89,10 @@ export default function Home() {
           </div>
           <p className="muted bento__about-desc">{profile.about}</p>
           <div className="bento__about-actions">
-            <Link to="/portfolio" className="btn btn--solid">
+            <Link to="/portfolio" className="btn btn--solid" onClick={() => trackEvent('cta_click', { menu: 'View Portfolio' })}>
               View Portfolio <ArrowIcon />
             </Link>
-            <Link to="/contact" className="btn btn--outline">Contact me</Link>
+            <Link to="/contact" className="btn btn--outline" onClick={() => trackEvent('cta_click', { menu: 'Contact me' })}>Contact me</Link>
           </div>
         </section>
 
@@ -100,10 +101,10 @@ export default function Home() {
           <p className="card__caption">Stay connected</p>
           <h3 className="card__heading">Profiles</h3>
           <div className="social-grid">
-            <a className="social-grid__item" href={profile.links.linkedin} target="_blank" rel="noreferrer">
+            <a className="social-grid__item" href={profile.links.linkedin} target="_blank" rel="noreferrer" onClick={() => trackEvent('social_click', { menu: 'LinkedIn' })}>
               <LinkedInIcon /><span>LinkedIn</span>
             </a>
-            <a className="social-grid__item" href={profile.links.github} target="_blank" rel="noreferrer">
+            <a className="social-grid__item" href={profile.links.github} target="_blank" rel="noreferrer" onClick={() => trackEvent('social_click', { menu: 'GitHub' })}>
               <GitHubIcon /><span>GitHub</span>
             </a>
           </div>

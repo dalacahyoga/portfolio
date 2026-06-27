@@ -1,5 +1,8 @@
-// Edit your personal details here.
-export const profile = {
+// Edit your personal details here. These are the defaults; the admin page can
+// override any of them at runtime (saved to localStorage under the key below).
+export const PROFILE_OVERRIDE_KEY = 'qa_profile_overrides'
+
+const defaultProfile = {
   name: 'I Ketut Dala Cahyoga',
   firstName: 'Dala',
   role: 'QA Engineer',
@@ -15,6 +18,33 @@ export const profile = {
     linkedin: 'https://www.linkedin.com/in/dalacahyoga',
     github: 'https://github.com/dalacahyoga',
   },
+}
+
+// The list of fields the admin "Edit konten" form exposes.
+export const EDITABLE_FIELDS = [
+  { key: 'name', label: 'Full name' },
+  { key: 'firstName', label: 'First name' },
+  { key: 'role', label: 'Role / title' },
+  { key: 'tagline', label: 'Tagline' },
+  { key: 'location', label: 'Location' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'photo', label: 'Photo URL / path' },
+  { key: 'about', label: 'About', multiline: true },
+  { key: 'linkedin', label: 'LinkedIn URL', link: true },
+  { key: 'github', label: 'GitHub URL', link: true },
+]
+
+function loadOverrides() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_OVERRIDE_KEY)) || {} } catch { return {} }
+}
+
+const ov = loadOverrides()
+export const profileDefaults = defaultProfile
+export const profile = {
+  ...defaultProfile,
+  ...ov,
+  links: { ...defaultProfile.links, ...(ov.links || {}) },
 }
 
 export const experience = [
