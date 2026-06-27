@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { profile, profileDefaults, EDITABLE_FIELDS } from '../data/profile.js'
 import {
-  getPageViews, getEvents, pageViewSummary, eventSummary, clearAnalytics,
-  pageLabel, sourceLabel,
+  eventReport, eventLabel, visitorReport, setAlias, clearAnalytics, sourceLabel,
 } from '../lib/analytics.js'
 import { saveContent, resetContent } from '../lib/content.js'
 import { supabase, supabaseEnabled, usernameToEmail } from '../lib/supabase.js'
@@ -102,7 +101,7 @@ function Login({ onSuccess }) {
 
 const TABS = [
   { id: 'content', label: 'Edit Konten' },
-  { id: 'visitors', label: 'Pengunjung per Halaman' },
+  { id: 'visitors', label: 'Pengunjung' },
   { id: 'events', label: 'Event Tracker' },
 ]
 
@@ -193,105 +192,193 @@ function EditContent() {
   )
 }
 
-function useAnalytics(summaryFn, rowsFn) {
-  const [state, setState] = useState({ loading: true, summary: [], recent: [], total: 0, error: '' })
+// Generic async loader for an admin report function.
+function useReport(reportFn) {
+  const [state, setState] = useState({ loading: true, error: '', data: null })
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: '' }))
-    try {
-      const [summary, rows] = await Promise.all([summaryFn(), rowsFn()])
-      setState({
-        loading: false, summary, recent: rows.slice(-25).reverse(),
-        total: summary.reduce((s, r) => s + r.count, 0), error: '',
-      })
-    } catch {
-      setState({ loading: false, summary: [], recent: [], total: 0, error: 'Gagal memuat data.' })
-    }
-  }, [summaryFn, rowsFn])
+    try { setState({ loading: false, error: '', data: await reportFn() }) }
+    catch { setState({ loading: false, error: 'Gagal memuat data.', data: null }) }
+  }, [reportFn])
   useEffect(() => { load() }, [load])
   return { ...state, reload: load }
 }
 
+function CountTable({ head, rows }) {
+  if (!rows?.length) return <p className="admin-empty">—</p>
+  return (
+    <div className="table-wrap">
+      <table className="admin-table">
+        <thead><tr><th>{head}</th><th>Jumlah</th><th>Terakhir</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.key}><td>{r.key}</td><td>{r.count}</td><td>{fmt(r.last)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function AliasInput({ vid, value }) {
+  const [val, setVal] = useState(value || '')
+  const [saved, setSaved] = useState(false)
+  useEffect(() => { setVal(value || '') }, [value])
+  async function commit() {
+    const next = val.trim()
+    if (next === (value || '')) return
+    try { await setAlias(vid, next); setSaved(true); setTimeout(() => setSaved(false), 1200) } catch { /* ignore */ }
+  }
+  // stop clicks/keys from toggling the parent <summary>
+  return (
+    <input
+      className={`visitor-card__alias ${saved ? 'is-saved' : ''}`}
+      value={val}
+      placeholder="+ alias"
+      aria-label="Alias pengunjung"
+      onChange={(e) => setVal(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur() } }}
+      onBlur={commit}
+    />
+  )
+}
+
 function Visitors() {
-  const { loading, summary, recent, total, error, reload } = useAnalytics(pageViewSummary, getPageViews)
+  const { loading, error, data: rep, reload } = useReport(visitorReport)
+
   return (
     <section className="admin-panel">
       <div className="admin-panel__head">
-        <h2>Pengunjung per Halaman</h2>
-        <p className="admin-note">Total kunjungan: <strong>{total}</strong> · sumber: {sourceLabel}</p>
+        <h2>Pengunjung</h2>
+        <p className="admin-note">
+          Pengunjung unik: <strong>{rep?.uniqueVisitors ?? 0}</strong> ·
+          kunjungan: <strong>{rep?.total ?? 0}</strong> ·
+          event: <strong>{rep?.totalEvents ?? 0}</strong> · sumber data: {sourceLabel}
+        </p>
       </div>
+      <Toolbar onReload={reload} />
       {loading ? <p className="admin-empty">Memuat…</p> : error ? <p className="admin-login__err">{error}</p> : (
         <>
-          {summary.length === 0 ? <p className="admin-empty">Belum ada data kunjungan.</p> : (
-            <table className="admin-table">
-              <thead><tr><th>Halaman</th><th>Path</th><th>Kunjungan</th><th>Terakhir</th></tr></thead>
-              <tbody>
-                {summary.map((r) => (
-                  <tr key={r.path}>
-                    <td>{r.label}</td><td className="admin-mono">{r.path}</td>
-                    <td>{r.count}</td><td>{fmt(r.last)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <h3 className="admin-subhead">Kunjungan terbaru</h3>
-          {recent.length === 0 ? <p className="admin-empty">—</p> : (
-            <ul className="admin-log">
-              {recent.map((v, i) => (
-                <li key={i}><span className="admin-mono">{pageLabel(v.path)}</span> <time>{fmt(v.ts)}</time></li>
+          {rep.visitors.length === 0 ? <p className="admin-empty">Belum ada pengunjung.</p> : (
+            <div className="visitor-list">
+              {rep.visitors.map((v, idx) => (
+                <details className="visitor-card" key={v.vid} open={idx === 0}>
+                  <summary className="visitor-card__head">
+                    <span className="visitor-card__id" title={v.vid}>#{idx + 1} · {String(v.vid).slice(0, 8)}</span>
+                    <AliasInput vid={v.vid} value={v.alias} />
+                    <span className="visitor-card__profile">{v.device} · {v.os} · {v.browser}</span>
+                    <span className="visitor-card__src">{v.source}</span>
+                    <span className="visitor-card__count">{v.count}× kunjungan · {v.eventCount} event</span>
+                    <span className="visitor-card__last">{fmt(v.last)}</span>
+                  </summary>
+                  <div className="visitor-card__body">
+                    <h4>Aktivitas (halaman + event)</h4>
+                    <div className="visitor-card__scroll">
+                      <table className="admin-table">
+                        <thead><tr><th>Aktivitas</th><th>Waktu</th></tr></thead>
+                        <tbody>
+                          {v.activity.map((a, i) => (
+                            <tr key={i}>
+                              <td>
+                                {a.type === 'page'
+                                  ? <><span className="tag tag--page">Halaman</span> {a.label}</>
+                                  : <><span className="tag tag--event">Event</span> {a.name}{a.target ? ` · ${a.target}` : ''}</>}
+                              </td>
+                              <td>{fmt(a.ts)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="visitor-card__foot">
+                      Pertama: {fmt(v.first)} · Bahasa: {v.lang || '—'} · Layar: {v.screen || '—'} · ID lengkap: <span className="admin-mono">{v.vid}</span>
+                    </p>
+                  </div>
+                </details>
               ))}
-            </ul>
+            </div>
           )}
+
+          <div className="admin-grid2 admin-grid2--top">
+            <div><h3 className="admin-subhead">Ringkasan Sumber</h3><CountTable head="Source" rows={rep.source} /></div>
+            <div><h3 className="admin-subhead">Ringkasan Device</h3><CountTable head="Device" rows={rep.device} /></div>
+          </div>
         </>
       )}
-      <Toolbar onReload={reload} />
     </section>
   )
 }
 
 function EventsTab() {
-  const { loading, summary, recent, total, error, reload } = useAnalytics(eventSummary, getEvents)
+  const { loading, error, data: rep, reload } = useReport(eventReport)
   return (
     <section className="admin-panel">
       <div className="admin-panel__head">
         <h2>Event Tracker</h2>
-        <p className="admin-note">Total event: <strong>{total}</strong> · klik menu &amp; aksi penting · sumber: {sourceLabel}</p>
+        <p className="admin-note">
+          Total event: <strong>{rep?.total ?? 0}</strong> · {rep?.groups?.length ?? 0} jenis event · sumber: {sourceLabel}
+        </p>
       </div>
+      <Toolbar onReload={reload} />
       {loading ? <p className="admin-empty">Memuat…</p> : error ? <p className="admin-login__err">{error}</p> : (
         <>
-          {summary.length === 0 ? <p className="admin-empty">Belum ada event tercatat.</p> : (
-            <table className="admin-table">
-              <thead><tr><th>Event</th><th>Target</th><th>Jumlah</th><th>Terakhir</th></tr></thead>
-              <tbody>
-                {summary.map((r) => (
-                  <tr key={r.key}>
-                    <td>{r.name}</td><td>{r.label}</td><td>{r.count}</td><td>{fmt(r.last)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <h3 className="admin-subhead">Event terbaru</h3>
-          {recent.length === 0 ? <p className="admin-empty">—</p> : (
-            <ul className="admin-log">
-              {recent.map((ev, i) => (
-                <li key={i}>
-                  <span className="admin-mono">{ev.name}{ev.meta?.menu ? ` · ${ev.meta.menu}` : ''}</span>
-                  <time>{fmt(ev.ts)}</time>
-                </li>
+          {rep.groups.length === 0 ? <p className="admin-empty">Belum ada event tercatat.</p> : (
+            <div className="ev-list">
+              {rep.groups.map((g, idx) => (
+                <details className="ev-card" key={g.name} open={idx === 0}>
+                  <summary className="ev-card__head">
+                    <span className="ev-card__name">{g.label}</span>
+                    <span className="ev-card__raw admin-mono">{g.name}</span>
+                    <span className="ev-card__count">{g.count}×</span>
+                    <span className="ev-card__last">{fmt(g.last)}</span>
+                  </summary>
+                  <div className="ev-card__body">
+                    <div className="table-wrap">
+                      <table className="admin-table">
+                        <thead><tr><th>Target</th><th>Jumlah</th><th>Terakhir</th></tr></thead>
+                        <tbody>
+                          {g.targets.map((t) => (
+                            <tr key={t.target}><td>{t.target}</td><td>{t.count}</td><td>{fmt(t.last)}</td></tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </details>
               ))}
-            </ul>
+            </div>
+          )}
+
+          <h3 className="admin-subhead">Event terbaru</h3>
+          {rep.recent.length === 0 ? <p className="admin-empty">—</p> : (
+            <div className="scroll-table">
+              <table className="admin-table">
+                <thead><tr><th>Event</th><th>Target</th><th>Waktu</th></tr></thead>
+                <tbody>
+                  {rep.recent.map((ev, i) => (
+                    <tr key={i}>
+                      <td>
+                        <span className="ev-name">{eventLabel(ev.name)}</span>
+                        <span className="ev-raw admin-mono"> ({ev.name})</span>
+                      </td>
+                      <td>{ev.meta?.menu || ev.meta?.label || '—'}</td>
+                      <td>{fmt(ev.ts)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </>
       )}
-      <Toolbar onReload={reload} />
     </section>
   )
 }
 
 function Toolbar({ onReload }) {
   return (
-    <div className="admin-danger">
+    <div className="admin-toolbar">
       <button className="btn btn--outline" onClick={onReload}>↻ Refresh</button>
       <button
         className="btn btn--ghost"

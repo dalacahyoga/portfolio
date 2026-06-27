@@ -1,6 +1,7 @@
 import { certificates } from '../data/profile.js'
 import Layout from '../components/Layout.jsx'
 import { CertIcon, ExternalIcon } from '../components/Icons.jsx'
+import { trackEvent } from '../lib/analytics.js'
 
 export default function Certificates() {
   return (
@@ -20,7 +21,12 @@ export default function Certificates() {
             ? { href: c.link, target: '_blank', rel: 'noreferrer' }
             : {}
           return (
-            <CardTag className="card cert-card" key={c.title} {...linkProps}>
+            <CardTag
+              className="card cert-card"
+              key={c.title}
+              {...linkProps}
+              onClick={() => trackEvent('open_certificate', { menu: c.title })}
+            >
               {c.image && (
                 <div className="cert-card__shot">
                   <img src={c.image} alt={c.title} loading="lazy" />

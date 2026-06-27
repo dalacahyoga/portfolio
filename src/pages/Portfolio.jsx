@@ -6,6 +6,7 @@ import { testCases, frameworks, getCode, BASE_URL } from '../data/testCases.js'
 import { apiTestCases, apiFrameworks, getApiCode, API_BASE } from '../data/apiTests.js'
 import { projects } from '../data/profile.js'
 import { ExternalIcon } from '../components/Icons.jsx'
+import { trackEvent } from '../lib/analytics.js'
 
 const categories = [
   { id: 'web', label: '🌐 Automation Website', short: '🌐 Website' },
@@ -68,6 +69,7 @@ export default function Portfolio() {
 
   function switchCategory(catId) {
     if (catId === category || runningId) return
+    trackEvent('select_category', { menu: (categories.find((c) => c.id === catId) || {}).label || catId })
     clearTimers()
     const nextFw = catId === 'api' ? apiFrameworks : frameworks
     const nextTc = catId === 'api' ? apiTestCases : testCases
@@ -80,6 +82,7 @@ export default function Portfolio() {
   }
 
   function closeDemo() {
+    trackEvent('close_demo', { menu: demoTitle || 'Live demo' })
     clearTimers()
     setShowDemo(false)
     setRunningId(null)
@@ -92,6 +95,8 @@ export default function Portfolio() {
   }
 
   function runTest(tc) {
+    // distinct identifier per code type (framework) + test case number
+    trackEvent('run_scenario', { menu: `${tc.id} · ${frameworkLabel} (${category})` })
     clearTimers()
     setActiveId(tc.id)
     setRunningId(tc.id)
@@ -165,7 +170,12 @@ export default function Portfolio() {
             const Tag = p.link ? 'a' : 'article'
             const linkProps = p.link ? { href: p.link, target: '_blank', rel: 'noreferrer' } : {}
             return (
-              <Tag className="card proj-card" key={p.name} {...linkProps}>
+              <Tag
+                className="card proj-card"
+                key={p.name}
+                {...linkProps}
+                onClick={() => trackEvent('open_project', { menu: p.name })}
+              >
                 <div className="proj-card__bar" />
                 {p.link && <span className="proj-card__ext"><ExternalIcon /></span>}
                 <h3 className="proj-card__name">{p.name}</h3>
@@ -210,7 +220,7 @@ export default function Portfolio() {
           ) : (
             <>
               Live UI automation against the{' '}
-              <a href={BASE_URL} target="_blank" rel="noreferrer">OrangeHRM demo site</a>.
+              <a href={BASE_URL} target="_blank" rel="noreferrer" onClick={() => trackEvent('open_external', { menu: 'OrangeHRM demo site' })}>OrangeHRM demo site</a>.
               Pick a framework, choose a test case, and press <strong>Run</strong> to watch
               the scenario replay step-by-step with the matching source code.
             </>
@@ -222,7 +232,7 @@ export default function Portfolio() {
             <button
               key={f.id}
               className={`pill ${framework === f.id ? 'is-active' : ''}`}
-              onClick={() => setFramework(f.id)}
+              onClick={() => { trackEvent('select_framework', { menu: `${f.label} (${category})` }); setFramework(f.id) }}
               disabled={!!runningId}
             >
               {f.label}
@@ -239,7 +249,7 @@ export default function Portfolio() {
             <div
               key={tc.id}
               className={`tc-card ${activeId === tc.id ? 'is-active' : ''}`}
-              onClick={() => setActiveId(tc.id)}
+              onClick={() => { trackEvent('select_testcase', { menu: `${tc.id} · ${tc.title} (${category})` }); setActiveId(tc.id) }}
             >
               <div className="tc-card__head">
                 <span className="tc-card__id">{tc.id}</span>
@@ -268,7 +278,7 @@ export default function Portfolio() {
               <div className="report-ready__text">✔ Run selesai — ini report hasil testnya:</div>
               <button
                 className="btn btn--solid report-cta"
-                onClick={() => window.open(`/report?tc=${active.id}&fw=${framework}&cat=${category}`, '_blank', 'noopener')}
+                onClick={() => { trackEvent('open_report', { menu: `${active.id} · ${frameworkLabel}` }); window.open(`/report?tc=${active.id}&fw=${framework}&cat=${category}`, '_blank', 'noopener') }}
               >
                 📄 Test Report (PDF)
               </button>

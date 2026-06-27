@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { profile } from '../data/profile.js'
 import Layout from '../components/Layout.jsx'
+import { trackEvent } from '../lib/analytics.js'
 import {
   MailIcon, LocationIcon, PhoneIcon, LinkedInIcon, GitHubIcon, ArrowIcon,
 } from '../components/Icons.jsx'
@@ -15,6 +16,7 @@ export default function Contact() {
 
   function onSubmit(e) {
     e.preventDefault()
+    trackEvent('submit_contact', { menu: 'Send message' })
     // No backend — open the user's mail client with a prefilled message.
     const subject = encodeURIComponent(`Portfolio enquiry from ${form.name || 'a visitor'}`)
     const body = encodeURIComponent(`${form.message}\n\n— ${form.name} (${form.email})`)
@@ -33,14 +35,14 @@ export default function Contact() {
       <div className="contact">
         {/* Contact info cards */}
         <div className="contact__info">
-          <a className="card info-row" href={`mailto:${profile.email}`}>
+          <a className="card info-row" href={`mailto:${profile.email}`} onClick={() => trackEvent('contact_click', { menu: 'Email' })}>
             <span className="info-row__icon"><MailIcon /></span>
             <span>
               <span className="info-row__label">Mail</span>
               <span className="info-row__value">{profile.email}</span>
             </span>
           </a>
-          <a className="card info-row" href={`tel:${profile.phone.replace(/\s/g, '')}`}>
+          <a className="card info-row" href={`tel:${profile.phone.replace(/\s/g, '')}`} onClick={() => trackEvent('contact_click', { menu: 'Phone' })}>
             <span className="info-row__icon"><PhoneIcon /></span>
             <span>
               <span className="info-row__label">Phone</span>
@@ -57,8 +59,8 @@ export default function Contact() {
           <div className="card contact__socials">
             <span className="info-row__label">Stay connected</span>
             <div className="contact__social-row">
-              <a href={profile.links.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn"><LinkedInIcon /></a>
-              <a href={profile.links.github} target="_blank" rel="noreferrer" aria-label="GitHub"><GitHubIcon /></a>
+              <a href={profile.links.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" onClick={() => trackEvent('contact_click', { menu: 'LinkedIn' })}><LinkedInIcon /></a>
+              <a href={profile.links.github} target="_blank" rel="noreferrer" aria-label="GitHub" onClick={() => trackEvent('contact_click', { menu: 'GitHub' })}><GitHubIcon /></a>
             </div>
           </div>
         </div>

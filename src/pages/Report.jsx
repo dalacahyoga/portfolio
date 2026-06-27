@@ -3,6 +3,7 @@ import { BackIcon } from '../components/Icons.jsx'
 import TestReport from '../components/TestReport.jsx'
 import { testCases, frameworks } from '../data/testCases.js'
 import { apiTestCases, apiFrameworks } from '../data/apiTests.js'
+import { trackEvent } from '../lib/analytics.js'
 
 export default function Report() {
   const navigate = useNavigate()
@@ -19,11 +20,11 @@ export default function Report() {
   return (
     <div className="report-page">
       <div className="report-wrap__bar">
-        <button className="report-back" onClick={() => navigate(-1)}>
+        <button className="report-back" onClick={() => { trackEvent('report_back', { menu: tc.id }); navigate(-1) }}>
           <BackIcon /> Back
         </button>
         <span>Test Report — {tc.id}</span>
-        <button className="report-back" onClick={() => window.print()}>Print / PDF</button>
+        <button className="report-back" onClick={() => { trackEvent('report_print', { menu: tc.id }); window.print() }}>Print / PDF</button>
       </div>
       <TestReport tc={tc} frameworkLabel={framework.label} kind={cat} />
     </div>

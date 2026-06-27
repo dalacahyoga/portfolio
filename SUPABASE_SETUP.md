@@ -19,8 +19,11 @@ create table if not exists pageviews (
   id   bigint generated always as identity primary key,
   path text not null,
   ref  text,
+  meta jsonb,            -- device + source info (browser, os, source, etc.)
   ts   timestamptz not null default now()
 );
+-- if the table already exists from an earlier setup, add the column:
+alter table pageviews add column if not exists meta jsonb;
 
 create table if not exists events (
   id   bigint generated always as identity primary key,
@@ -37,10 +40,22 @@ create table if not exists content (
 insert into content (id, data) values (1, '{}'::jsonb)
   on conflict (id) do nothing;
 
+create table if not exists aliases (
+  vid        text primary key,   -- visitor id
+  alias      text,               -- admin-set label
+  updated_at timestamptz not null default now()
+);
+
 -- row level security ---------------------------------------------------
 alter table pageviews enable row level security;
 alter table events    enable row level security;
 alter table content   enable row level security;
+alter table aliases   enable row level security;
+
+-- aliases are admin-only (read + write require login)
+create policy "alias read"   on aliases for select to authenticated using (true);
+create policy "alias insert" on aliases for insert to authenticated with check (true);
+create policy "alias update" on aliases for update to authenticated using (true);
 
 -- anyone (anon) may RECORD a visit/event; only logged-in admin may READ/DELETE
 create policy "pv insert"  on pageviews for insert to anon, authenticated with check (true);

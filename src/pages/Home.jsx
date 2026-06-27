@@ -72,7 +72,7 @@ export default function Home() {
         <section className="card bento__about">
           <div
             className="bento__about-media"
-            onClick={() => setPhotoOpen(true)}
+            onClick={() => { trackEvent('open_photo', { menu: 'Profile photo' }); setPhotoOpen(true) }}
             title="Click to enlarge"
           >
             <img
@@ -126,14 +126,14 @@ export default function Home() {
             <button
               type="button"
               className={`cred-tab ${tab === 'experience' ? 'is-active' : ''}`}
-              onClick={() => setTab('experience')}
+              onClick={() => { trackEvent('select_tab', { menu: 'Experience' }); setTab('experience') }}
             >
               Experience
             </button>
             <button
               type="button"
               className={`cred-tab ${tab === 'education' ? 'is-active' : ''}`}
-              onClick={() => setTab('education')}
+              onClick={() => { trackEvent('select_tab', { menu: 'Education' }); setTab('education') }}
             >
               Education
             </button>
@@ -166,7 +166,7 @@ export default function Home() {
                                 type="button"
                                 className="role-toggle"
                                 aria-expanded={open}
-                                onClick={() => toggleRole(id)}
+                                onClick={() => { if (!open) trackEvent('show_details', { menu: `Experience: ${job.role}` }); toggleRole(id) }}
                               >
                                 {open ? 'Hide details' : 'Show details'}
                                 <span className={`role-toggle__chev${open ? ' is-open' : ''}`}>
@@ -210,7 +210,7 @@ export default function Home() {
                                 type="button"
                                 className="role-toggle"
                                 aria-expanded={open}
-                                onClick={() => toggleRole(id)}
+                                onClick={() => { if (!open) trackEvent('show_details', { menu: `Education: ${ed.degree}` }); toggleRole(id) }}
                               >
                                 {open ? 'Hide details' : 'Show details'}
                                 <span className={`role-toggle__chev${open ? ' is-open' : ''}`}>
@@ -247,7 +247,7 @@ export default function Home() {
                   <li className={`project-item${open ? ' is-open' : ''}`} key={p.name}>
                     <div className="project-item__head">
                       {p.link ? (
-                        <a className="project-item__link" href={p.link} target="_blank" rel="noreferrer">
+                        <a className="project-item__link" href={p.link} target="_blank" rel="noreferrer" onClick={() => trackEvent('open_project', { menu: p.name })}>
                           <strong className="project-item__name">{p.name}</strong>
                           <span className="project-item__ext"><ExternalIcon /></span>
                         </a>
@@ -259,7 +259,7 @@ export default function Home() {
                         className="proj-toggle"
                         aria-expanded={open}
                         aria-label="Toggle description"
-                        onClick={() => toggleRole(id)}
+                        onClick={() => { if (!open) trackEvent('view_project', { menu: p.name }); toggleRole(id) }}
                       >
                         <span className="proj-toggle__chev"><ChevronIcon /></span>
                       </button>
@@ -295,7 +295,7 @@ export default function Home() {
                 type="button"
                 className="skills-more skills-more--d"
                 aria-expanded={skillsOpen}
-                onClick={() => setSkillsOpen((o) => !o)}
+                onClick={() => { trackEvent('toggle_skills', { menu: skillsOpen ? 'View less' : 'View more' }); setSkillsOpen((o) => !o) }}
               >
                 {skillsOpen ? 'View less' : `View more (+${extraDesktop})`}
                 <span className={`skills-more__chev${skillsOpen ? ' is-open' : ''}`}>
@@ -308,7 +308,7 @@ export default function Home() {
                 type="button"
                 className="skills-more skills-more--m"
                 aria-expanded={skillsOpen}
-                onClick={() => setSkillsOpen((o) => !o)}
+                onClick={() => { trackEvent('toggle_skills', { menu: skillsOpen ? 'View less' : 'View more' }); setSkillsOpen((o) => !o) }}
               >
                 {skillsOpen ? 'View less' : `View more (+${extraMobile})`}
                 <span className={`skills-more__chev${skillsOpen ? ' is-open' : ''}`}>
@@ -320,7 +320,7 @@ export default function Home() {
         </div>
 
         {/* CTA to certificates */}
-        <Link to="/certificates" className="card bento__cta">
+        <Link to="/certificates" className="card bento__cta" onClick={() => trackEvent('open_certificates', { menu: 'Certificates card' })}>
           <div>
             <p className="card__caption">Qualifications</p>
             <h3 className="card__heading">Certificates</h3>
@@ -331,7 +331,7 @@ export default function Home() {
       </div>
 
       {photoOpen && (
-        <div className="photo-lightbox" onClick={() => setPhotoOpen(false)}>
+        <div className="photo-lightbox" onClick={() => { trackEvent('close_photo', { menu: 'Profile photo' }); setPhotoOpen(false) }}>
           <img src={profile.photo} alt={profile.name} />
           <button className="photo-lightbox__close" aria-label="Close">×</button>
         </div>

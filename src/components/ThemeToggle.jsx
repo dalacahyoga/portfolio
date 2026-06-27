@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SunIcon, MoonIcon } from './Icons.jsx'
+import { trackEvent } from '../lib/analytics.js'
 
 // Toggles between light and dark themes via a [data-theme] attribute on <html>,
 // persisting the choice in localStorage.
@@ -10,6 +11,7 @@ export default function ThemeToggle() {
 
   function toggle() {
     const next = theme === 'dark' ? 'light' : 'dark'
+    trackEvent('toggle_theme', { menu: next === 'dark' ? 'Dark mode' : 'Light mode' })
     document.documentElement.dataset.theme = next
     try { localStorage.setItem('theme', next) } catch { /* ignore */ }
     setTheme(next)
