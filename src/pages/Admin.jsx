@@ -5,6 +5,7 @@ import {
   eventReport, eventLabel, visitorReport, setAlias, deleteVisitor, clearAnalytics, sourceLabel,
 } from '../lib/analytics.js'
 import { TrashIcon } from '../components/Icons.jsx'
+import LocationCell from '../components/LocationCell.jsx'
 import { saveContent, resetContent } from '../lib/content.js'
 import { supabase, supabaseEnabled, usernameToEmail } from '../lib/supabase.js'
 
@@ -288,7 +289,9 @@ function Visitors() {
                     <span className="visitor-card__last">{fmt(v.last)}</span>
                   </summary>
                   <div className="visitor-card__body">
-                    <h4>Aktivitas (halaman + event)</h4>
+                    <h4>Lokasi (perkiraan IP)</h4>
+                    <LocationCell location={v.location} />
+                    <h4 style={{ marginTop: '16px' }}>Aktivitas (halaman + event)</h4>
                     <div className="visitor-card__scroll">
                       <table className="admin-table">
                         <thead><tr><th>Aktivitas</th><th>Waktu</th></tr></thead>

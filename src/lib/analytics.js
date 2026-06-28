@@ -3,6 +3,7 @@
 //  • localStorage fallback (no backend) → data is per-browser only
 import { supabase, supabaseEnabled } from './supabase.js'
 import { collectVisitor, getVisitorId, normalizeSource } from './visitor.js'
+import { getIpLocation } from './geocoding.js'
 
 const PV_KEY = 'qa_pageviews'
 const EV_KEY = 'qa_events'
@@ -36,13 +37,17 @@ export function trackPageView(path) {
   if (path === _lastPV.path && now - _lastPV.t < 1500) return
   _lastPV = { path, t: now }
   const meta = collectVisitor()
-  if (supabaseEnabled) {
-    supabase.from('pageviews').insert({ path, ref: meta.referrer, meta }).then(() => {}, () => {})
-    return
-  }
-  const arr = lsRead(PV_KEY)
-  arr.push({ path, ts: Date.now(), ref: meta.referrer, meta })
-  lsWrite(PV_KEY, arr)
+  // Attach approximate IP location (city-level, no permission), then persist.
+  ;(async () => {
+    try { meta.location = await getIpLocation() } catch { meta.location = null }
+    if (supabaseEnabled) {
+      supabase.from('pageviews').insert({ path, ref: meta.referrer, meta }).then(() => {}, () => {})
+    } else {
+      const arr = lsRead(PV_KEY)
+      arr.push({ path, ts: Date.now(), ref: meta.referrer, meta })
+      lsWrite(PV_KEY, arr)
+    }
+  })()
 }
 
 export function trackEvent(name, meta) {
@@ -149,7 +154,7 @@ export async function visitorReport() {
   const ensure = (vid, ts) => {
     let v = byVid.get(vid)
     if (!v) {
-      v = { vid, count: 0, eventCount: 0, first: ts, last: 0, device: '—', os: '—', browser: '—', source: '—', lang: '', screen: '', activity: [] }
+      v = { vid, count: 0, eventCount: 0, first: ts, last: 0, device: '—', os: '—', browser: '—', source: '—', lang: '', screen: '', location: null, activity: [] }
       byVid.set(vid, v)
     }
     return v
@@ -166,7 +171,9 @@ export async function visitorReport() {
       v.last = ts
       v.device = r.meta?.device || '—'; v.os = r.meta?.os || '—'; v.browser = r.meta?.browser || '—'
       v.source = src; v.lang = r.meta?.lang || ''; v.screen = r.meta?.screen || ''
+      if (r.meta?.location) v.location = r.meta.location
     }
+    if (r.meta?.location && !v.location) v.location = r.meta.location
     v.activity.push({ type: 'page', label: pageLabel(r.path), ts })
   }
   for (const ev of evs) {
