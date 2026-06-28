@@ -60,7 +60,7 @@ Deno.serve(async () => {
       byPage[r.path] = (byPage[r.path] ?? 0) + 1
     }
 
-    const fmtDate = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    const fmtDate = (d: Date) => d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'Asia/Jakarta' })
     const range = `${fmtDate(new Date(since))} – ${fmtDate(new Date())}`
 
     const html = `

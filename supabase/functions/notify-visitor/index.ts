@@ -36,7 +36,9 @@ Deno.serve(async (req) => {
       return new Response('returning visitor', { status: 200 }) // not new → skip
     }
 
-    const when = new Date(record.ts ?? Date.now()).toLocaleString('id-ID')
+    const when = new Date(record.ts ?? Date.now()).toLocaleString('id-ID', {
+      timeZone: 'Asia/Jakarta', dateStyle: 'medium', timeStyle: 'short',
+    }) + ' WIB'
     const row = (icon: string, label: string, value: string, last = false) =>
       `<tr>
          <td style="padding:11px 14px;font-size:13px;color:#5a6378;width:130px;${last ? '' : 'border-bottom:1px solid #eceef3'}">${icon}&nbsp;&nbsp;${label}</td>
